@@ -1,17 +1,26 @@
-import { SignedIn, SignedOut, SignInButton } from '@clerk/tanstack-react-start'
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  useAuth,
+} from '@clerk/tanstack-react-start'
 import {
   GithubFreeIcons,
   SparklesFreeIcons,
   GitBranchFreeIcons,
   CodeFreeIcons,
   Rocket01FreeIcons,
+  Loading03FreeIcons,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {
+  const navigate = useNavigate()
+  const { isLoaded } = useAuth()
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       <div className="absolute inset-0 overflow-hidden">
@@ -68,27 +77,54 @@ function App() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className="landing-btn-github group">
-                  <span className="landing-btn-glow" />
-                  <span className="relative flex items-center gap-3">
-                    <HugeiconsIcon icon={GithubFreeIcons} className="size-5" />
-                    <span>Continue with GitHub</span>
-                  </span>
-                </button>
-              </SignInButton>
-            </SignedOut>
-
-            <SignedIn>
-              <button className="landing-btn-generate group">
-                <span className="landing-btn-shimmer" />
+            {!isLoaded ? (
+              <button
+                className="landing-btn-github group opacity-70 cursor-wait"
+                disabled
+              >
+                <span className="landing-btn-glow" />
                 <span className="relative flex items-center gap-3">
-                  <HugeiconsIcon icon={SparklesFreeIcons} className="size-5" />
-                  <span>Generate Projects</span>
+                  <HugeiconsIcon
+                    icon={Loading03FreeIcons}
+                    className="size-5 animate-spin"
+                  />
+                  <span>Loading...</span>
                 </span>
               </button>
-            </SignedIn>
+            ) : (
+              <>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <button className="landing-btn-github group">
+                      <span className="landing-btn-glow" />
+                      <span className="relative flex items-center gap-3">
+                        <HugeiconsIcon
+                          icon={GithubFreeIcons}
+                          className="size-5"
+                        />
+                        <span>Continue with GitHub</span>
+                      </span>
+                    </button>
+                  </SignInButton>
+                </SignedOut>
+
+                <SignedIn>
+                  <button
+                    className="landing-btn-generate group"
+                    onClick={() => navigate({ to: '/projectIdeas' })}
+                  >
+                    <span className="landing-btn-shimmer" />
+                    <span className="relative flex items-center gap-3">
+                      <HugeiconsIcon
+                        icon={SparklesFreeIcons}
+                        className="size-5"
+                      />
+                      <span>Generate Projects</span>
+                    </span>
+                  </button>
+                </SignedIn>
+              </>
+            )}
           </div>
 
           <div className="mt-16 flex items-center justify-center gap-8 text-muted-foreground/60 text-sm">

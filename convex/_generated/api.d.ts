@@ -9,6 +9,7 @@
  */
 
 import type * as initialGeneration from "../initialGeneration.js";
+import type * as projects from "../projects.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +19,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   initialGeneration: typeof initialGeneration;
+  projects: typeof projects;
 }>;
 
 /**

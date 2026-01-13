@@ -296,3 +296,78 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Project Ideas page styles */
+.ideas-grid {
+  background-image:
+    linear-gradient(to right, oklch(0.59 0.20 277 / 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.59 0.20 277 / 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+}
+
+.ideas-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.ideas-glow-1 {
+  width: 500px;
+  height: 500px;
+  background: oklch(0.51 0.23 277 / 0.2);
+  top: -200px;
+  right: 10%;
+  animation: glow-drift 25s ease-in-out infinite;
+}
+
+.ideas-glow-2 {
+  width: 400px;
+  height: 400px;
+  background: oklch(0.68 0.16 277 / 0.15);
+  bottom: 10%;
+  left: -100px;
+  animation: glow-drift 30s ease-in-out infinite reverse;
+}
+
+@keyframes glow-drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, 20px); }
+}
+
+/* Project card animations */
+.project-card {
+  animation: card-enter 0.5s ease-out backwards;
+  background: linear-gradient(
+    135deg,
+    oklch(0.21 0.006 285.885 / 0.8) 0%,
+    oklch(0.21 0.006 285.885 / 0.6) 100%
+  );
+  backdrop-filter: blur(8px);
+  border: 1px solid oklch(1 0 0 / 0.08);
+}
+
+.project-card:hover {
+  background: linear-gradient(
+    135deg,
+    oklch(0.24 0.01 277 / 0.9) 0%,
+    oklch(0.21 0.006 285.885 / 0.7) 100%
+  );
+  border-color: oklch(0.51 0.23 277 / 0.3);
+  box-shadow:
+    0 8px 32px -8px oklch(0.51 0.23 277 / 0.2),
+    0 0 0 1px oklch(1 0 0 / 0.05) inset;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

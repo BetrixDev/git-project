@@ -1,7 +1,7 @@
 'use node'
 
 import { v } from 'convex/values'
-import { action, internalMutation } from './_generated/server'
+import { action } from './_generated/server'
 import { internal } from './_generated/api'
 import { ToolLoopAgent, tool, Output } from 'ai'
 import { openai } from '@ai-sdk/openai'
@@ -83,13 +83,6 @@ async function fetchGitHubRepos(
   }
 }
 
-const projectIdeaValidator = v.object({
-  id: v.string(),
-  name: v.string(),
-  description: v.string(),
-  tags: v.array(v.string()),
-})
-
 const projectIdeasSchema = z.object({
   projects: z.array(
     z.object({
@@ -112,6 +105,7 @@ const projectIdeasSchema = z.object({
 export const generateInitialProjectIdeas = action({
   args: {
     githubUsername: v.string(),
+    guidance: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -120,11 +114,19 @@ export const generateInitialProjectIdeas = action({
       throw new Error('You must be signed in to generate project ideas')
     }
 
-    const { githubUsername } = args
+    const { githubUsername, guidance } = args
+    const userId = identity.subject
 
-    const agent = new ToolLoopAgent({
-      model: 'gemini/gemini-2.5-flash',
-      instructions: `You are a creative project idea generator. Your task is to analyze a developer's GitHub repositories and suggest new project ideas tailored to their skills and interests.
+    // Set status to generating
+    await ctx.runMutation(internal.projects.startGeneration, {
+      userId,
+      guidance: guidance || undefined,
+    })
+
+    try {
+      const agent = new ToolLoopAgent({
+        model: 'google/gemini-2.5-flash',
+        instructions: `You are a creative project idea generator. Your task is to analyze a developer's GitHub repositories and suggest new project ideas tailored to their skills and interests.
 
 First, use the getGitHubRepos tool to explore the user's repositories. You can paginate through them to get a comprehensive view of their work. Look for patterns in:
 - Programming languages they use
@@ -137,68 +139,68 @@ After gathering enough information, generate 5 diverse project ideas that:
 - Are unique and creative, not generic tutorial projects
 - Have practical value or would be genuinely fun to build
 - Match their apparent interests and expertise level`,
-      tools: {
-        getGitHubRepos: tool({
-          description:
-            'Fetches public GitHub repositories for a user. Use pagination to explore more repos if needed. Returns repos sorted by most recently updated.',
-          inputSchema: z.object({
-            page: z
-              .number()
-              .min(1)
-              .default(1)
-              .describe('Page number for pagination (starts at 1)'),
-            perPage: z
-              .number()
-              .min(1)
-              .max(30)
-              .default(10)
-              .describe('Number of repos per page (max 30)'),
-            includeForks: z
-              .boolean()
-              .default(false)
-              .describe('Whether to include forked repositories'),
+        tools: {
+          getGitHubRepos: tool({
+            description:
+              'Fetches public GitHub repositories for a user. Use pagination to explore more repos if needed. Returns repos sorted by most recently updated.',
+            inputSchema: z.object({
+              page: z
+                .number()
+                .min(1)
+                .default(1)
+                .describe('Page number for pagination (starts at 1)'),
+              perPage: z
+                .number()
+                .min(1)
+                .max(30)
+                .default(10)
+                .describe('Number of repos per page (max 30)'),
+              includeForks: z
+                .boolean()
+                .default(false)
+                .describe('Whether to include forked repositories'),
+            }),
+            execute: async (params) => {
+              return fetchGitHubRepos(
+                githubUsername,
+                params.page,
+                params.perPage,
+                params.includeForks,
+              )
+            },
           }),
-          execute: async (params) => {
-            return fetchGitHubRepos(
-              githubUsername,
-              params.page,
-              params.perPage,
-              params.includeForks,
-            )
-          },
-        }),
-      },
-      output: Output.object({ schema: projectIdeasSchema }),
-    })
+        },
+        output: Output.object({ schema: projectIdeasSchema }),
+      })
 
-    const result = await agent.generate({
-      prompt: `Analyze the GitHub repositories for user "${githubUsername}" and generate 5 personalized project ideas based on their work. Start by fetching their repos to understand their skills and interests.`,
-    })
+      const basePrompt = `Analyze the GitHub repositories for user "${githubUsername}" and generate 5 personalized project ideas based on their work. Start by fetching their repos to understand their skills and interests.`
+      const prompt = guidance
+        ? `${basePrompt}\n\nAdditional guidance from the user: ${guidance}`
+        : basePrompt
 
-    if (!result.output) {
-      throw new Error('Agent did not generate project ideas')
+      const result = await agent.generate({ prompt })
+
+      if (!result.output) {
+        await ctx.runMutation(internal.projects.setGenerationError, {
+          userId,
+          error: 'AI did not generate project ideas. Please try again.',
+        })
+        return null
+      }
+
+      await ctx.runMutation(internal.projects.storeProjectIdeas, {
+        userId,
+        projects: result.output.projects,
+      })
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred'
+      await ctx.runMutation(internal.projects.setGenerationError, {
+        userId,
+        error: errorMessage,
+      })
     }
 
-    await ctx.runMutation(internal.initialGeneration.storeProjectIdeas, {
-      userId: identity.subject,
-      projects: result.output.projects,
-    })
-
-    return null
-  },
-})
-
-export const storeProjectIdeas = internalMutation({
-  args: {
-    userId: v.string(),
-    projects: v.array(projectIdeaValidator),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await ctx.db.insert('initialProjectGenerations', {
-      userId: args.userId,
-      projects: args.projects,
-    })
     return null
   },
 })
