@@ -103,11 +103,10 @@ const projectIdeasSchema = z.object({
 
 export const generateInitialProjectIdeas = action({
   args: {
+    generationId: v.id('generations'),
     githubUsername: v.string(),
     guidance: v.optional(v.string()),
     // Branching support
-    parentGenerationId: v.optional(v.id('generations')),
-    parentProjectId: v.optional(v.string()),
     parentProjectName: v.optional(v.string()),
     parentProjectDescription: v.optional(v.string()),
   },
@@ -119,30 +118,16 @@ export const generateInitialProjectIdeas = action({
     }
 
     const {
+      generationId,
       githubUsername,
       guidance,
-      parentGenerationId,
-      parentProjectId,
       parentProjectName,
       parentProjectDescription,
     } = args
-    const userId = identity.subject
-
-    // Set status to generating and get the generation ID
-    const generationId = await ctx.runMutation(
-      internal.projects.startGeneration,
-      {
-        userId,
-        guidance: guidance || undefined,
-        parentGenerationId,
-        parentProjectId,
-        parentProjectName,
-      },
-    )
 
     try {
       // Build context-aware instructions based on whether this is a branch
-      const isBranch = parentProjectId && parentProjectName
+      const isBranch = parentProjectName && parentProjectDescription
       const branchContext = isBranch
         ? `
 

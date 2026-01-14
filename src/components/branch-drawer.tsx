@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useAction, useQuery } from 'convex/react'
-import { useUser } from '@clerk/tanstack-react-start'
+import { useQuery } from 'convex/react'
 import { useNavigate } from '@tanstack/react-router'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -23,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { useGenerateProjects } from '@/hooks/use-generate-projects'
 
 interface Project {
   id: string
@@ -44,14 +44,10 @@ export function BranchDrawer({
   project,
   generationId,
 }: BranchDrawerProps) {
-  const { user } = useUser()
   const navigate = useNavigate()
-  const generateProjects = useAction(
-    api.initialGeneration.generateInitialProjectIdeas,
-  )
+  const { generateProjects, isGenerating, canGenerate } = useGenerateProjects()
 
   const [guidance, setGuidance] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
 
   // Get existing branches for this project
   const branches = useQuery(
@@ -63,31 +59,20 @@ export function BranchDrawer({
     (b) => b.parentProjectId === project?.id,
   )
 
-  const githubUsername = user?.externalAccounts?.find(
-    (acc) => acc.provider === 'github',
-  )?.username
-
   const handleBranch = async () => {
-    if (!githubUsername || !project || !generationId || isGenerating) return
+    if (!canGenerate || !project || !generationId || isGenerating) return
 
-    setIsGenerating(true)
-    try {
-      await generateProjects({
-        githubUsername,
-        guidance: guidance.trim() || undefined,
-        parentGenerationId: generationId,
-        parentProjectId: project.id,
-        parentProjectName: project.name,
-        parentProjectDescription: project.description,
-      })
+    const result = await generateProjects({
+      guidance: guidance.trim() || undefined,
+      parentGenerationId: generationId,
+      parentProjectId: project.id,
+      parentProjectName: project.name,
+      parentProjectDescription: project.description,
+    })
+
+    if (result) {
       setGuidance('')
       onOpenChange(false)
-      // Navigate to see the new generation
-      navigate({ to: '/projectIdeas', search: {} })
-    } catch (error) {
-      console.error('Failed to generate branched projects:', error)
-    } finally {
-      setIsGenerating(false)
     }
   }
 
@@ -246,7 +231,7 @@ export function BranchDrawer({
         <SheetFooter className="border-t border-primary/10">
           <Button
             onClick={handleBranch}
-            disabled={isGenerating || !githubUsername}
+            disabled={isGenerating || !canGenerate}
             className={`w-full gap-2 h-12 text-sm font-semibold ${isGenerating ? 'branch-generating' : ''}`}
             size="lg"
           >

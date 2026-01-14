@@ -33,6 +33,7 @@ import {
   SidebarMenuSubButton,
   SidebarSeparator,
 } from '@/components/ui/sidebar'
+import { useGenerateProjects } from '@/hooks/use-generate-projects'
 
 function formatRelativeTime(timestamp: number): string {
   const now = Date.now()
@@ -257,6 +258,11 @@ function GenerationHistoryList() {
 
 export function AppSidebar() {
   const user = useUser()
+  const { generateProjects, isGenerating } = useGenerateProjects()
+
+  const handleNewGeneration = () => {
+    generateProjects()
+  }
 
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -295,16 +301,19 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
-                render={
-                  <Link
-                    to="/projectIdeas"
-                    search={{ doNewGeneration: 'true' }}
-                  />
-                }
+                onClick={handleNewGeneration}
+                disabled={isGenerating}
                 tooltip="New Generation"
               >
-                <HugeiconsIcon icon={SparklesFreeIcons} className="size-4" />
-                <span>New Generation</span>
+                {isGenerating ? (
+                  <HugeiconsIcon
+                    icon={Loading03FreeIcons}
+                    className="size-4 animate-spin"
+                  />
+                ) : (
+                  <HugeiconsIcon icon={SparklesFreeIcons} className="size-4" />
+                )}
+                <span>{isGenerating ? 'Generating...' : 'New Generation'}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

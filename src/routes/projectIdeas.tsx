@@ -3,11 +3,10 @@ import {
   SignedIn,
   SignedOut,
   useAuth,
-  useUser,
 } from '@clerk/tanstack-react-start'
-import { useAction, useQuery } from 'convex/react'
+import { useQuery } from 'convex/react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Add01FreeIcons,
@@ -44,10 +43,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useGenerateProjects } from '@/hooks/use-generate-projects'
 
 type SearchParams = {
   generationId?: string
-  doNewGeneration?: string
 }
 
 export const Route = createFileRoute('/projectIdeas')({
@@ -57,10 +56,6 @@ export const Route = createFileRoute('/projectIdeas')({
       generationId:
         typeof search.generationId === 'string'
           ? search.generationId
-          : undefined,
-      doNewGeneration:
-        typeof search.doNewGeneration === 'string'
-          ? search.doNewGeneration
           : undefined,
     }
   },
@@ -98,9 +93,8 @@ function ProjectIdeasPage() {
 }
 
 function ProjectIdeasContent() {
-  const { user } = useUser()
-  const { generationId, doNewGeneration } = Route.useSearch()
-  const navigate = useNavigate()
+  const { generationId } = Route.useSearch()
+  const { generateProjects, isGenerating, canGenerate } = useGenerateProjects()
 
   // If a specific generationId is provided, fetch that generation
   const specificGeneration = useQuery(
@@ -114,12 +108,7 @@ function ProjectIdeasContent() {
   // Use specific generation if provided, otherwise use latest
   const projectData = generationId ? specificGeneration : latestProjectData
 
-  const generateProjects = useAction(
-    api.initialGeneration.generateInitialProjectIdeas,
-  )
-
   const [guidance, setGuidance] = useState('')
-  const [hasTriggeredInitial, setHasTriggeredInitial] = useState(false)
 
   // Branch drawer state
   const [branchDrawerOpen, setBranchDrawerOpen] = useState(false)
@@ -129,12 +118,8 @@ function ProjectIdeasContent() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [detailProject, setDetailProject] = useState<Project | null>(null)
 
-  const githubUsername = user?.externalAccounts?.find(
-    (acc) => acc.provider === 'github',
-  )?.username
-
   const isLoading = projectData === undefined
-  const isGenerating = latestProjectData?.status === 'generating'
+  const currentIsGenerating = projectData?.status === 'generating'
   const hasError = projectData?.status === 'error'
   const isCompleted = projectData?.status === 'completed'
 
@@ -165,50 +150,9 @@ function ProjectIdeasContent() {
     console.log('Chat with project:', detailProject?.name)
   }
 
-  useEffect(() => {
-    // Trigger new generation if requested via search param
-    if (doNewGeneration === 'true' && githubUsername && !isGenerating) {
-      navigate({ to: '/projectIdeas', search: {} })
-      handleGenerate()
-      return
-    }
-
-    // Auto-generate on first visit if no generations exist
-    if (
-      !generationId &&
-      latestProjectData === null &&
-      !hasTriggeredInitial &&
-      githubUsername
-    ) {
-      setHasTriggeredInitial(true)
-      handleGenerate()
-    }
-  }, [
-    latestProjectData,
-    hasTriggeredInitial,
-    githubUsername,
-    generationId,
-    doNewGeneration,
-    isGenerating,
-  ])
-
-  const handleGenerate = async () => {
-    if (!githubUsername || isGenerating) return
-
-    // Navigate to latest view so user sees the new generation
-    if (generationId) {
-      navigate({ to: '/projectIdeas', search: {} })
-    }
-
-    try {
-      await generateProjects({
-        githubUsername,
-        guidance: guidance.trim() || undefined,
-      })
-      setGuidance('')
-    } catch (error) {
-      console.error('Failed to generate projects:', error)
-    }
+  const handleGenerate = () => {
+    generateProjects({ guidance: guidance.trim() || undefined })
+    setGuidance('')
   }
 
   return (
@@ -253,7 +197,7 @@ function ProjectIdeasContent() {
                 <Button
                   size="lg"
                   onClick={handleGenerate}
-                  disabled={isGenerating || !githubUsername}
+                  disabled={isGenerating || !canGenerate}
                   className="shrink-0"
                 >
                   {isGenerating ? (
@@ -307,14 +251,14 @@ function ProjectIdeasContent() {
                 </p>
                 <Button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !githubUsername}
+                  disabled={isGenerating || !canGenerate}
                 >
                   <HugeiconsIcon icon={RefreshFreeIcons} className="size-4" />
                   Try Again
                 </Button>
               </div>
             </div>
-          ) : isGenerating ? (
+          ) : currentIsGenerating ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
@@ -361,7 +305,7 @@ function ProjectIdeasContent() {
               </p>
               <Button
                 onClick={handleGenerate}
-                disabled={isGenerating || !githubUsername}
+                disabled={isGenerating || !canGenerate}
               >
                 <HugeiconsIcon icon={SparklesFreeIcons} className="size-4" />
                 Generate Projects

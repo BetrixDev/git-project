@@ -1,8 +1,37 @@
 import { v } from 'convex/values'
-import { internalMutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 import { generationStatusValidator, projectValidator } from './schema'
 
 export { projectValidator }
+
+// Public mutation for creating a new generation - returns ID immediately
+export const createGeneration = mutation({
+  args: {
+    guidance: v.optional(v.string()),
+    parentGenerationId: v.optional(v.id('generations')),
+    parentProjectId: v.optional(v.string()),
+    parentProjectName: v.optional(v.string()),
+  },
+  returns: v.id('generations'),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) {
+      throw new Error('You must be signed in to create a generation')
+    }
+
+    const generationId = await ctx.db.insert('generations', {
+      userId: identity.subject,
+      status: 'generating',
+      projects: [],
+      guidance: args.guidance || undefined,
+      parentGenerationId: args.parentGenerationId,
+      parentProjectId: args.parentProjectId,
+      parentProjectName: args.parentProjectName,
+    })
+
+    return generationId
+  },
+})
 
 export const startGeneration = internalMutation({
   args: {

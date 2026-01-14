@@ -1,9 +1,15 @@
-import { HeadContent, Scripts, createRootRouteWithContext, useRouteContext  } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Scripts,
+  createRootRouteWithContext,
+  useRouteContext,
+} from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { ClerkProvider, useAuth } from '@clerk/tanstack-react-start'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
 import { shadcn } from '@clerk/themes'
+import { Toaster } from 'sonner'
 import appCss from '../styles.css?url'
 import type { QueryClient } from '@tanstack/react-query'
 import type { ConvexReactClient } from 'convex/react'
@@ -63,6 +69,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <AppSidebar />
               <SidebarInset>{children}</SidebarInset>
             </SidebarProvider>
+            <Toaster theme="dark" position="bottom-right" richColors />
             <TanStackDevtools
               config={{
                 position: 'bottom-right',

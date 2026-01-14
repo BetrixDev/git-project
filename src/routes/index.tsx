@@ -13,14 +13,15 @@ import {
   SparklesFreeIcons,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { useGenerateProjects } from '@/hooks/use-generate-projects'
 
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {
-  const navigate = useNavigate()
   const { isLoaded } = useAuth()
+  const { generateProjects, isGenerating } = useGenerateProjects()
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -117,15 +118,25 @@ function App() {
                 <SignedIn>
                   <button
                     className="landing-btn-generate group"
-                    onClick={() => navigate({ to: '/projectIdeas' })}
+                    onClick={() => generateProjects()}
+                    disabled={isGenerating}
                   >
                     <span className="landing-btn-shimmer" />
                     <span className="relative flex items-center gap-3">
-                      <HugeiconsIcon
-                        icon={SparklesFreeIcons}
-                        className="size-5"
-                      />
-                      <span>Generate Projects</span>
+                      {isGenerating ? (
+                        <HugeiconsIcon
+                          icon={Loading03FreeIcons}
+                          className="size-5 animate-spin"
+                        />
+                      ) : (
+                        <HugeiconsIcon
+                          icon={SparklesFreeIcons}
+                          className="size-5"
+                        />
+                      )}
+                      <span>
+                        {isGenerating ? 'Generating...' : 'Generate Projects'}
+                      </span>
                     </span>
                   </button>
                 </SignedIn>
