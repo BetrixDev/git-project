@@ -15,13 +15,12 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { useGenerateProjects } from '@/hooks/use-generate-projects'
+import { ExpandableGenerateButton } from '@/components/expandable-generate-button'
 
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {
   const { isLoaded } = useAuth()
-  const { generateProjects, isGenerating } = useGenerateProjects()
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -116,29 +115,7 @@ function App() {
                 </SignedOut>
 
                 <SignedIn>
-                  <button
-                    className="landing-btn-generate group"
-                    onClick={() => generateProjects()}
-                    disabled={isGenerating}
-                  >
-                    <span className="landing-btn-shimmer" />
-                    <span className="relative flex items-center gap-3">
-                      {isGenerating ? (
-                        <HugeiconsIcon
-                          icon={Loading03FreeIcons}
-                          className="size-5 animate-spin"
-                        />
-                      ) : (
-                        <HugeiconsIcon
-                          icon={SparklesFreeIcons}
-                          className="size-5"
-                        />
-                      )}
-                      <span>
-                        {isGenerating ? 'Generating...' : 'Generate Projects'}
-                      </span>
-                    </span>
-                  </button>
+                  <ExpandableGenerateButton />
                 </SignedIn>
               </>
             )}
