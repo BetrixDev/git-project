@@ -70,7 +70,7 @@ function App() {
           </div>
 
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6">
-            <span className="text-foreground">Git</span>
+            <span className="text-foreground">Git a</span>
             <span className="text-transparent bg-clip-text bg-linear-to-r from-primary via-chart-2 to-chart-1">
               {' '}
               Project

@@ -82,9 +82,16 @@ function GenerationHistoryList() {
 
   if (history.length === 0) {
     return (
-      <div className="px-2 py-4 text-center">
-        <p className="text-xs text-muted-foreground">
-          No generations yet. Generate your first project ideas!
+      <div className="px-3 py-6 text-center">
+        <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-transparent ring-1 ring-primary/10">
+          <HugeiconsIcon
+            icon={SparklesFreeIcons}
+            className="size-4 text-primary/50"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground/70">No generations yet</p>
+        <p className="text-[10px] text-muted-foreground/50 mt-1">
+          Generate your first project ideas!
         </p>
       </div>
     )
@@ -129,21 +136,28 @@ function GenerationHistoryList() {
                     search={{ generationId: branch._id }}
                   />
                 }
+                className={`sidebar-branch-item group/branch transition-all duration-200 ${isBranchActive ? 'bg-linear-to-r from-primary/10 to-transparent' : 'hover:bg-muted/40'}`}
               >
-                <div className="flex items-center gap-1.5 overflow-hidden flex-1">
-                  {isBranchGenerating ? (
-                    <HugeiconsIcon
-                      icon={Loading03FreeIcons}
-                      className="size-3 animate-spin text-primary shrink-0"
-                    />
-                  ) : (
-                    <HugeiconsIcon
-                      icon={GitBranchIcon}
-                      className="size-3 text-primary shrink-0"
-                    />
-                  )}
+                <div className="flex items-center gap-2 overflow-hidden flex-1">
+                  <div
+                    className={`flex size-5 items-center justify-center rounded-md transition-all duration-200 ${isBranchGenerating ? 'bg-primary/20' : isBranchActive ? 'bg-primary/15 text-primary' : 'bg-muted/30 text-muted-foreground group-hover/branch:text-primary'}`}
+                  >
+                    {isBranchGenerating ? (
+                      <HugeiconsIcon
+                        icon={Loading03FreeIcons}
+                        className="size-2.5 animate-spin text-primary"
+                      />
+                    ) : (
+                      <HugeiconsIcon
+                        icon={GitBranchIcon}
+                        className="size-2.5"
+                      />
+                    )}
+                  </div>
                   <div className="flex flex-col gap-0 overflow-hidden flex-1">
-                    <span className="truncate text-[11px]">
+                    <span
+                      className={`truncate text-[11px] ${isBranchActive ? 'font-medium text-foreground' : ''}`}
+                    >
                       {isBranchGenerating
                         ? 'Generating...'
                         : branch.parentProjectName
@@ -154,9 +168,9 @@ function GenerationHistoryList() {
                               (branch.guidance.length > 20 ? '...' : '')
                             : `${branch.projectCount} ideas`}
                     </span>
-                    <span className="text-[9px] text-muted-foreground">
+                    <span className="text-[9px] text-muted-foreground/60">
                       {isBranchGenerating ? (
-                        <span className="text-primary animate-pulse">
+                        <span className="text-primary/80 animate-pulse">
                           Creating ideas
                         </span>
                       ) : (
@@ -164,11 +178,6 @@ function GenerationHistoryList() {
                       )}
                     </span>
                   </div>
-                  {hasChildBranches && (
-                    <span className="text-[9px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">
-                      {childBranches.length}
-                    </span>
-                  )}
                 </div>
               </SidebarMenuSubButton>
 
@@ -184,7 +193,7 @@ function GenerationHistoryList() {
   }
 
   return (
-    <SidebarMenu>
+    <SidebarMenu className="gap-2">
       {rootGenerations.map((generation) => {
         const isActive = currentGenerationId === generation._id
         const displayTime = generation.generatedAt || generation._creationTime
@@ -209,17 +218,27 @@ function GenerationHistoryList() {
                     generation.guidance ||
                     `${generation.projectCount} project ideas`
               }
+              className={`sidebar-history-item group/item transition-all duration-200 ${isActive ? 'bg-linear-to-r from-primary/15 to-transparent ring-1 ring-primary/20' : 'hover:bg-linear-to-r hover:from-muted/60 hover:to-transparent'}`}
             >
-              {isGenerating ? (
-                <HugeiconsIcon
-                  icon={Loading03FreeIcons}
-                  className="size-4 animate-spin"
-                />
-              ) : (
-                <HugeiconsIcon icon={SparklesFreeIcons} className="size-4" />
-              )}
+              <div
+                className={`flex size-7 items-center justify-center rounded-lg transition-all duration-200 ${isGenerating ? 'bg-primary/20 animate-pulse' : isActive ? 'bg-primary/20 text-primary' : 'bg-muted/40 text-muted-foreground group-hover/item:bg-primary/15 group-hover/item:text-primary'}`}
+              >
+                {isGenerating ? (
+                  <HugeiconsIcon
+                    icon={Loading03FreeIcons}
+                    className="size-3.5 animate-spin text-primary"
+                  />
+                ) : (
+                  <HugeiconsIcon
+                    icon={SparklesFreeIcons}
+                    className="size-3.5"
+                  />
+                )}
+              </div>
               <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
-                <span className="truncate">
+                <span
+                  className={`truncate text-[13px] ${isActive ? 'font-semibold text-foreground' : 'font-medium'}`}
+                >
                   {isGenerating
                     ? 'Generating...'
                     : generation.displayName
@@ -230,7 +249,7 @@ function GenerationHistoryList() {
                           (generation.guidance.length > 25 ? '...' : '')
                         : `${generation.projectCount} ideas`}
                 </span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-muted-foreground/70">
                   {isGenerating ? (
                     <span className="text-primary animate-pulse">
                       Creating project ideas
@@ -240,11 +259,6 @@ function GenerationHistoryList() {
                   )}
                 </span>
               </div>
-              {hasBranches && (
-                <span className="text-[9px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                  {branches.length}
-                </span>
-              )}
             </SidebarMenuButton>
 
             {/* Branch items - now recursive */}
@@ -266,20 +280,20 @@ export function AppSidebar() {
 
   return (
     <Sidebar variant="inset" collapsible="icon">
-      <SidebarHeader>
+      <SidebarHeader className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               render={<Link to="/" />}
-              tooltip="Git Project"
+              tooltip="Git a Project"
+              className="sidebar-header-btn group/header rounded-lg p-2"
             >
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <HugeiconsIcon icon={SparklesFreeIcons} className="size-4" />
-              </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold">Git Project</span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="font-bold bg-linear-to-r from-foreground to-foreground/70 bg-clip-text">
+                  Git a Project
+                </span>
+                <span className="text-[10px] text-muted-foreground/80">
                   AI Project Ideas
                 </span>
               </div>
@@ -291,29 +305,35 @@ export function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton render={<Link to="/" />} tooltip="Home">
-                <HugeiconsIcon icon={Home01FreeIcons} className="size-4" />
-                <span>Home</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+        <SidebarGroup className="px-3">
+          <SidebarMenu className="gap-1">
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={handleNewGeneration}
                 disabled={isGenerating}
                 tooltip="New Generation"
+                className="group/gen transition-all duration-200 hover:bg-linear-to-r hover:from-primary/15 hover:to-transparent"
               >
-                {isGenerating ? (
-                  <HugeiconsIcon
-                    icon={Loading03FreeIcons}
-                    className="size-4 animate-spin"
-                  />
-                ) : (
-                  <HugeiconsIcon icon={SparklesFreeIcons} className="size-4" />
-                )}
-                <span>{isGenerating ? 'Generating...' : 'New Generation'}</span>
+                <div
+                  className={`flex size-7 items-center justify-center rounded-lg transition-all duration-200 ${isGenerating ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary group-hover/gen:bg-primary/20 group-hover/gen:shadow-[0_0_12px_-3px] group-hover/gen:shadow-primary/40'}`}
+                >
+                  {isGenerating ? (
+                    <HugeiconsIcon
+                      icon={Loading03FreeIcons}
+                      className="size-3.5 animate-spin"
+                    />
+                  ) : (
+                    <HugeiconsIcon
+                      icon={SparklesFreeIcons}
+                      className="size-3.5 transition-transform duration-200 group-hover/gen:scale-110"
+                    />
+                  )}
+                </div>
+                <span
+                  className={`font-medium ${isGenerating ? 'text-primary' : ''}`}
+                >
+                  {isGenerating ? 'Generating...' : 'New Generation'}
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -321,18 +341,29 @@ export function AppSidebar() {
 
         <SidebarSeparator />
 
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <HugeiconsIcon icon={Clock01FreeIcons} className="size-4 mr-2" />
+        <SidebarGroup className="px-3">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-semibold mb-2">
+            <div className="flex size-5 items-center justify-center rounded-md bg-muted/30">
+              <HugeiconsIcon
+                icon={Clock01FreeIcons}
+                className="size-3 text-muted-foreground/70"
+              />
+            </div>
             History
           </SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="sidebar-history-container">
             <SignedIn>
               <GenerationHistoryList />
             </SignedIn>
             <SignedOut>
-              <div className="px-2 py-4 text-center">
-                <p className="text-xs text-muted-foreground">
+              <div className="px-3 py-6 text-center">
+                <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-xl bg-muted/30">
+                  <HugeiconsIcon
+                    icon={Clock01FreeIcons}
+                    className="size-4 text-muted-foreground/50"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground/70">
                   Sign in to view your history
                 </p>
               </div>
@@ -342,14 +373,25 @@ export function AppSidebar() {
 
         <SidebarSeparator />
 
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <HugeiconsIcon icon={Message01FreeIcons} className="size-4 mr-2" />
+        <SidebarGroup className="px-3">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-semibold mb-2">
+            <div className="flex size-5 items-center justify-center rounded-md bg-muted/30">
+              <HugeiconsIcon
+                icon={Message01FreeIcons}
+                className="size-3 text-muted-foreground/70"
+              />
+            </div>
             Chats
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <div className="px-2 py-4 text-center">
-              <p className="text-xs text-muted-foreground">
+            <div className="px-3 py-6 text-center">
+              <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-primary/10 to-transparent ring-1 ring-primary/10">
+                <HugeiconsIcon
+                  icon={Message01FreeIcons}
+                  className="size-4 text-primary/50"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground/70">
                 Chat feature coming soon
               </p>
             </div>
@@ -357,22 +399,27 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="p-3 border-t border-border/50">
         <SignedIn>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div className="flex items-center gap-2 px-2 py-1.5">
+              <div className="sidebar-user-card flex items-center gap-3 px-2 py-2 rounded-xl bg-linear-to-r from-muted/40 to-transparent ring-1 ring-border/50 transition-all duration-200 hover:from-muted/60 hover:ring-border">
                 <UserButton
                   appearance={{
                     elements: {
-                      avatarBox: 'size-8',
+                      avatarBox: 'size-9 ring-2 ring-primary/20',
                     },
                   }}
                 />
-                <span className="text-xs truncate group-data-[collapsible=icon]:hidden">
-                  {user.user?.username ||
-                    user.user?.emailAddresses[0].emailAddress}
-                </span>
+                <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
+                  <span className="text-xs font-medium truncate">
+                    {user.user?.username ||
+                      user.user?.emailAddresses[0].emailAddress}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/60 truncate">
+                    Free tier
+                  </span>
+                </div>
               </div>
             </SidebarMenuItem>
           </SidebarMenu>

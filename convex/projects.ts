@@ -66,7 +66,7 @@ function deriveDisplayNameFromTags(
     id: string
     name: string
     description: string
-    tags: string[]
+    tags: Array<string>
   }>,
 ): string {
   if (projects.length === 0) return 'Empty Generation'

@@ -3,10 +3,10 @@ import { useQuery } from 'convex/react'
 import { useNavigate } from '@tanstack/react-router'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
+  ArrowRight01FreeIcons,
   GitBranchIcon,
   Loading03FreeIcons,
   SparklesFreeIcons,
-  ArrowRight01FreeIcons,
   Tick01Icon,
 } from '@hugeicons/core-free-icons'
 import { api } from '../../convex/_generated/api'
@@ -14,10 +14,10 @@ import type { Id } from '../../convex/_generated/dataModel'
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetDescription,
   SheetFooter,
+  SheetHeader,
+  SheetTitle,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'

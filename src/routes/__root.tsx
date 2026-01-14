@@ -32,7 +32,7 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Git Project',
+        title: 'Git a Project',
       },
       {
         name: 'description',

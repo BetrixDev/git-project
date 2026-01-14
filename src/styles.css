@@ -754,3 +754,112 @@
 .branch-generating {
   animation: branch-pulse 2s ease-in-out infinite;
 }
+
+/* Modern Sidebar Styles */
+.sidebar-header-btn:hover .sidebar-logo-container {
+  transform: translateY(-1px);
+}
+
+/* Sidebar background gradient overlay */
+[data-sidebar='sidebar'][data-slot='sidebar-inner'] {
+  background: linear-gradient(
+    180deg,
+    oklch(0.21 0.01 277 / 0.98) 0%,
+    oklch(0.18 0.008 285.885 / 0.98) 50%,
+    oklch(0.21 0.006 285.885 / 0.98) 100%
+  );
+  position: relative;
+}
+
+[data-sidebar='sidebar'][data-slot='sidebar-inner']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 100% 100% at 50% 0%,
+    oklch(0.59 0.2 277 / 0.05) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+/* Sidebar separator styling */
+[data-sidebar='separator'] {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(1 0 0 / 0.06) 20%,
+    oklch(1 0 0 / 0.06) 80%,
+    transparent 100%
+  );
+  height: 1px;
+  margin: 8px 12px;
+}
+
+/* History container scroll shadow */
+.sidebar-history-container {
+  position: relative;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+@keyframes icon-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* History item hover glow effect */
+.sidebar-history-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  box-shadow: inset 0 0 20px -10px oklch(0.59 0.2 277 / 0.3);
+}
+
+.sidebar-history-item:hover::after {
+  opacity: 1;
+}
+
+/* Active state glow for history items */
+.sidebar-history-item[data-active='true']::after {
+  opacity: 1;
+  box-shadow: inset 0 0 24px -8px oklch(0.59 0.2 277 / 0.4);
+}
+
+/* User card hover effect */
+.sidebar-user-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-user-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(1 0 0 / 0.03) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.sidebar-user-card:hover::before {
+  left: 100%;
+}

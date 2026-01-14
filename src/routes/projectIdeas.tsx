@@ -11,6 +11,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Add01FreeIcons,
   Alert02FreeIcons,
+  ArrowLeft02FreeIcons,
   BubbleChatIcon,
   Calendar03FreeIcons,
   GitBranchIcon,
@@ -18,7 +19,6 @@ import {
   Message01FreeIcons,
   RefreshFreeIcons,
   SparklesFreeIcons,
-  ArrowLeft02FreeIcons,
 } from '@hugeicons/core-free-icons'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
