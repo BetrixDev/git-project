@@ -14,10 +14,12 @@ import {
   Alert02FreeIcons,
   BubbleChatIcon,
   Calendar03FreeIcons,
+  GitBranchIcon,
   Loading03FreeIcons,
   Message01FreeIcons,
   RefreshFreeIcons,
   SparklesFreeIcons,
+  ArrowLeft02FreeIcons,
 } from '@hugeicons/core-free-icons'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
@@ -33,6 +35,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { BranchDrawer } from '@/components/branch-drawer'
 
 type SearchParams = {
   generationId?: string
@@ -110,6 +113,10 @@ function ProjectIdeasContent() {
   const [guidance, setGuidance] = useState('')
   const [hasTriggeredInitial, setHasTriggeredInitial] = useState(false)
 
+  // Branch drawer state
+  const [branchDrawerOpen, setBranchDrawerOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+
   const githubUsername = user?.externalAccounts?.find(
     (acc) => acc.provider === 'github',
   )?.username
@@ -118,6 +125,15 @@ function ProjectIdeasContent() {
   const isGenerating = latestProjectData?.status === 'generating'
   const hasError = projectData?.status === 'error'
   const isCompleted = projectData?.status === 'completed'
+
+  // Get the current generation ID for branching
+  const currentGenerationId = (projectData?._id ??
+    null) as Id<'generations'> | null
+
+  const handleBranchFromProject = (project: Project) => {
+    setSelectedProject(project)
+    setBranchDrawerOpen(true)
+  }
 
   useEffect(() => {
     // Trigger new generation if requested via search param
@@ -293,6 +309,8 @@ function ProjectIdeasContent() {
               <GenerationInfo
                 generatedAt={projectData.generatedAt}
                 guidance={projectData.guidance}
+                parentProjectName={projectData.parentProjectName}
+                parentGenerationId={projectData.parentGenerationId}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projectData.projects.map((project, index) => (
@@ -300,6 +318,7 @@ function ProjectIdeasContent() {
                     key={project.id}
                     project={project}
                     index={index}
+                    onBranch={handleBranchFromProject}
                   />
                 ))}
               </div>
@@ -320,6 +339,13 @@ function ProjectIdeasContent() {
           )}
         </main>
       </div>
+
+      <BranchDrawer
+        open={branchDrawerOpen}
+        onOpenChange={setBranchDrawerOpen}
+        project={selectedProject}
+        generationId={currentGenerationId}
+      />
     </div>
   )
 }
@@ -337,14 +363,50 @@ function formatDate(timestamp: number): string {
 function GenerationInfo({
   generatedAt,
   guidance,
+  parentProjectName,
+  parentGenerationId,
 }: {
   generatedAt?: number
   guidance?: string
+  parentProjectName?: string
+  parentGenerationId?: string
 }) {
-  if (!generatedAt && !guidance) return null
+  const navigate = useNavigate()
 
   return (
     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pb-2">
+      {parentProjectName && (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
+            <HugeiconsIcon
+              icon={GitBranchIcon}
+              className="size-3.5 text-primary"
+            />
+            <span className="text-primary text-xs font-medium">
+              Branched from "{parentProjectName}"
+            </span>
+          </div>
+          {parentGenerationId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() =>
+                navigate({
+                  to: '/projectIdeas',
+                  search: { generationId: parentGenerationId },
+                })
+              }
+            >
+              <HugeiconsIcon
+                icon={ArrowLeft02FreeIcons}
+                className="size-3.5 mr-1"
+              />
+              View Parent
+            </Button>
+          )}
+        </div>
+      )}
       {generatedAt && (
         <div className="flex items-center gap-2">
           <HugeiconsIcon icon={Calendar03FreeIcons} className="size-4" />
@@ -370,7 +432,15 @@ interface Project {
   tags: Array<string>
 }
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+function ProjectCard({
+  project,
+  index,
+  onBranch,
+}: {
+  project: Project
+  index: number
+  onBranch: (project: Project) => void
+}) {
   return (
     <Card
       className="project-card group hover:border-primary/30 transition-all duration-300"
@@ -393,10 +463,19 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           ))}
         </div>
       </CardContent>
-      <CardFooter className="pt-2">
-        <Button variant="ghost" size="sm" className="w-full gap-2">
+      <CardFooter className="pt-2 gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 gap-2 hover:bg-primary/10 hover:text-primary hover:border-primary/30"
+          onClick={() => onBranch(project)}
+        >
+          <HugeiconsIcon icon={GitBranchIcon} className="size-3.5" />
+          Branch
+        </Button>
+        <Button variant="ghost" size="sm" className="flex-1 gap-2">
           <HugeiconsIcon icon={Message01FreeIcons} className="size-3.5" />
-          Chat with this idea
+          Chat
         </Button>
       </CardFooter>
     </Card>

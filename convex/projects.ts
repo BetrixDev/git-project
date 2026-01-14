@@ -8,6 +8,9 @@ export const startGeneration = internalMutation({
   args: {
     userId: v.string(),
     guidance: v.optional(v.string()),
+    parentGenerationId: v.optional(v.id('generations')),
+    parentProjectId: v.optional(v.string()),
+    parentProjectName: v.optional(v.string()),
   },
   returns: v.id('generations'),
   handler: async (ctx, args) => {
@@ -16,6 +19,9 @@ export const startGeneration = internalMutation({
       status: 'generating',
       projects: [],
       guidance: args.guidance || undefined,
+      parentGenerationId: args.parentGenerationId,
+      parentProjectId: args.parentProjectId,
+      parentProjectName: args.parentProjectName,
     })
 
     return generationId
@@ -72,6 +78,9 @@ export const getLatestGeneration = query({
       generatedAt: v.optional(v.number()),
       guidance: v.optional(v.string()),
       projects: v.array(projectValidator),
+      parentGenerationId: v.optional(v.id('generations')),
+      parentProjectId: v.optional(v.string()),
+      parentProjectName: v.optional(v.string()),
     }),
   ),
   handler: async (ctx) => {
@@ -101,6 +110,9 @@ export const getGenerationHistory = query({
       generatedAt: v.optional(v.number()),
       guidance: v.optional(v.string()),
       projectCount: v.number(),
+      parentGenerationId: v.optional(v.id('generations')),
+      parentProjectId: v.optional(v.string()),
+      parentProjectName: v.optional(v.string()),
     }),
   ),
   handler: async (ctx) => {
@@ -122,6 +134,9 @@ export const getGenerationHistory = query({
       generatedAt: gen.generatedAt,
       guidance: gen.guidance,
       projectCount: gen.projects.length,
+      parentGenerationId: gen.parentGenerationId,
+      parentProjectId: gen.parentProjectId,
+      parentProjectName: gen.parentProjectName,
     }))
   },
 })
@@ -140,6 +155,9 @@ export const getGenerationById = query({
       generatedAt: v.optional(v.number()),
       guidance: v.optional(v.string()),
       projects: v.array(projectValidator),
+      parentGenerationId: v.optional(v.id('generations')),
+      parentProjectId: v.optional(v.string()),
+      parentProjectName: v.optional(v.string()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -154,5 +172,50 @@ export const getGenerationById = query({
     }
 
     return generation
+  },
+})
+
+// Get branches (children) for a specific generation
+export const getGenerationBranches = query({
+  args: { parentId: v.id('generations') },
+  returns: v.array(
+    v.object({
+      _id: v.id('generations'),
+      _creationTime: v.number(),
+      status: generationStatusValidator,
+      generatedAt: v.optional(v.number()),
+      guidance: v.optional(v.string()),
+      projectCount: v.number(),
+      parentProjectId: v.optional(v.string()),
+      parentProjectName: v.optional(v.string()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) {
+      return []
+    }
+
+    const branches = await ctx.db
+      .query('generations')
+      .withIndex('by_parentGenerationId', (q) =>
+        q.eq('parentGenerationId', args.parentId),
+      )
+      .order('desc')
+      .collect()
+
+    // Filter to only user's own branches
+    return branches
+      .filter((gen) => gen.userId === identity.subject)
+      .map((gen) => ({
+        _id: gen._id,
+        _creationTime: gen._creationTime,
+        status: gen.status,
+        generatedAt: gen.generatedAt,
+        guidance: gen.guidance,
+        projectCount: gen.projects.length,
+        parentProjectId: gen.parentProjectId,
+        parentProjectName: gen.parentProjectName,
+      }))
   },
 })

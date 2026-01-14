@@ -23,7 +23,13 @@ export default defineSchema({
     generatedAt: v.optional(v.number()),
     guidance: v.optional(v.string()),
     projects: v.array(projectValidator),
-  }).index('by_userId', ['userId']),
+    // Branching support - link to parent generation and specific project that inspired this
+    parentGenerationId: v.optional(v.id('generations')),
+    parentProjectId: v.optional(v.string()), // The project.id from parent generation
+    parentProjectName: v.optional(v.string()), // Cached for display
+  })
+    .index('by_userId', ['userId'])
+    .index('by_parentGenerationId', ['parentGenerationId']),
 
   chats: defineTable({
     userId: v.string(),

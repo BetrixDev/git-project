@@ -83,9 +83,6 @@ importers:
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
-      shadcn:
-        specifier: ^3.6.3
-        version: 3.6.3(@types/node@22.19.5)(hono@4.11.3)(typescript@5.9.3)
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
@@ -135,6 +132,9 @@ importers:
       prettier:
         specifier: ^3.7.4
         version: 3.7.4
+      shadcn:
+        specifier: ^3.6.3
+        version: 3.6.3(@types/node@22.19.5)(hono@4.11.3)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

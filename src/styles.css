@@ -126,6 +126,61 @@
   html {
     @apply font-sans;
   }
+
+  /* Custom scrollbar styling */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.4 0.02 277 / 0.5) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: oklch(0.4 0.02 277 / 0.4);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.5 0.1 277 / 0.6);
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Thin scrollbar variant for smaller containers */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    border-width: 1px;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Landing page styles */
@@ -410,4 +465,122 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* Branch drawer styles */
+.branch-drawer-content {
+  background: linear-gradient(
+    180deg,
+    oklch(0.18 0.008 277 / 0.98) 0%,
+    oklch(0.16 0.006 285.885 / 0.98) 100%
+  );
+  backdrop-filter: blur(20px);
+}
+
+/* Branch indicator pill */
+.branch-indicator {
+  background: linear-gradient(
+    135deg,
+    oklch(0.51 0.23 277 / 0.15) 0%,
+    oklch(0.68 0.16 277 / 0.1) 100%
+  );
+  border: 1px solid oklch(0.59 0.2 277 / 0.3);
+}
+
+/* Sidebar branch tree line */
+[data-sidebar-menu-sub] {
+  position: relative;
+}
+
+[data-sidebar-menu-sub]::before {
+  content: '';
+  position: absolute;
+  left: 1.25rem;
+  top: 0;
+  bottom: 0.5rem;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    oklch(0.59 0.2 277 / 0.3) 0%,
+    oklch(0.59 0.2 277 / 0.1) 100%
+  );
+}
+
+[data-sidebar-menu-sub-button] {
+  position: relative;
+}
+
+[data-sidebar-menu-sub-button]::before {
+  content: '';
+  position: absolute;
+  left: -0.75rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 1px;
+  background: oklch(0.59 0.2 277 / 0.3);
+}
+
+/* Branch button hover effect */
+.branch-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.branch-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    oklch(0.59 0.2 277 / 0.1) 0%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.branch-btn:hover::before {
+  opacity: 1;
+}
+
+/* Source project card in drawer */
+.source-project-card {
+  background: linear-gradient(
+    135deg,
+    oklch(0.59 0.2 277 / 0.08) 0%,
+    oklch(0.68 0.16 277 / 0.05) 100%
+  );
+  border: 1px solid oklch(0.59 0.2 277 / 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.source-project-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    oklch(0.51 0.23 277) 0%,
+    oklch(0.68 0.16 277) 50%,
+    oklch(0.79 0.1 275) 100%
+  );
+}
+
+/* Pulse animation for generating state */
+@keyframes branch-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.59 0.2 277 / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px oklch(0.59 0.2 277 / 0);
+  }
+}
+
+.branch-generating {
+  animation: branch-pulse 2s ease-in-out infinite;
 }

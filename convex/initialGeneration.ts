@@ -105,6 +105,11 @@ export const generateInitialProjectIdeas = action({
   args: {
     githubUsername: v.string(),
     guidance: v.optional(v.string()),
+    // Branching support
+    parentGenerationId: v.optional(v.id('generations')),
+    parentProjectId: v.optional(v.string()),
+    parentProjectName: v.optional(v.string()),
+    parentProjectDescription: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -113,7 +118,14 @@ export const generateInitialProjectIdeas = action({
       throw new Error('You must be signed in to generate project ideas')
     }
 
-    const { githubUsername, guidance } = args
+    const {
+      githubUsername,
+      guidance,
+      parentGenerationId,
+      parentProjectId,
+      parentProjectName,
+      parentProjectDescription,
+    } = args
     const userId = identity.subject
 
     // Set status to generating and get the generation ID
@@ -122,10 +134,30 @@ export const generateInitialProjectIdeas = action({
       {
         userId,
         guidance: guidance || undefined,
+        parentGenerationId,
+        parentProjectId,
+        parentProjectName,
       },
     )
 
     try {
+      // Build context-aware instructions based on whether this is a branch
+      const isBranch = parentProjectId && parentProjectName
+      const branchContext = isBranch
+        ? `
+
+IMPORTANT: This is a BRANCHED generation. The user has selected a specific project idea they're interested in:
+- Project Name: "${parentProjectName}"
+- Project Description: "${parentProjectDescription}"
+
+Generate 5 NEW project ideas that are variations, extensions, or related concepts based on this specific project. Ideas should:
+- Explore different angles or implementations of the same core concept
+- Suggest complementary projects that work well with the original idea
+- Propose simpler or more complex versions
+- Consider different tech stacks or platforms for similar functionality
+- Think creatively about related problem spaces`
+        : ''
+
       const agent = new ToolLoopAgent({
         model: 'google/gemini-2.5-flash',
         instructions: `You are a creative project idea generator. Your task is to analyze a developer's GitHub repositories and suggest new project ideas tailored to their skills and interests.
@@ -140,7 +172,7 @@ After gathering enough information, generate 6 diverse project ideas that:
 - Build on their existing skills while introducing new challenges
 - Are unique and creative, not generic tutorial projects
 - Have practical value or would be genuinely fun to build
-- Match their apparent interests and expertise level`,
+- Match their apparent interests and expertise level${branchContext}`,
         tools: {
           getGitHubRepos: tool({
             description:
@@ -175,10 +207,19 @@ After gathering enough information, generate 6 diverse project ideas that:
         output: Output.object({ schema: projectIdeasSchema }),
       })
 
-      const basePrompt = `Analyze the GitHub repositories for user "${githubUsername}" and generate 5 personalized project ideas based on their work. Start by fetching their repos to understand their skills and interests.`
-      const prompt = guidance
-        ? `${basePrompt}\n\nAdditional guidance from the user: ${guidance}`
-        : basePrompt
+      let prompt: string
+      if (isBranch) {
+        prompt = `Generate 5 NEW project ideas that branch from and are inspired by this specific project: "${parentProjectName}" - ${parentProjectDescription}`
+        if (guidance) {
+          prompt += `\n\nAdditional guidance from the user: ${guidance}`
+        }
+        prompt += `\n\nFirst, briefly check the user's GitHub repos (${githubUsername}) to understand their skill level, then generate the branched ideas.`
+      } else {
+        prompt = `Analyze the GitHub repositories for user "${githubUsername}" and generate 5 personalized project ideas based on their work. Start by fetching their repos to understand their skills and interests.`
+        if (guidance) {
+          prompt += `\n\nAdditional guidance from the user: ${guidance}`
+        }
+      }
 
       const result = await agent.generate({ prompt })
 

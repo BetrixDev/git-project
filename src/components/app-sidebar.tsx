@@ -9,6 +9,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Clock01FreeIcons,
+  GitBranchIcon,
   Home01FreeIcons,
   Loading03FreeIcons,
   Message01FreeIcons,
@@ -27,6 +28,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarSeparator,
 } from '@/components/ui/sidebar'
 
@@ -86,12 +90,26 @@ function GenerationHistoryList() {
     )
   }
 
+  // Organize into tree structure: root generations and their branches
+  const rootGenerations = history.filter((g) => !g.parentGenerationId)
+  const branchMap = new Map<string, typeof history>()
+
+  history.forEach((g) => {
+    if (g.parentGenerationId) {
+      const existing = branchMap.get(g.parentGenerationId) || []
+      existing.push(g)
+      branchMap.set(g.parentGenerationId, existing)
+    }
+  })
+
   return (
     <SidebarMenu>
-      {history.map((generation) => {
+      {rootGenerations.map((generation) => {
         const isActive = currentGenerationId === generation._id
         const displayTime = generation.generatedAt || generation._creationTime
         const isGenerating = generation.status === 'generating'
+        const branches = branchMap.get(generation._id) || []
+        const hasBranches = branches.length > 0
 
         return (
           <SidebarMenuItem key={generation._id}>
@@ -116,18 +134,79 @@ function GenerationHistoryList() {
               ) : (
                 <HugeiconsIcon icon={SparklesFreeIcons} className="size-4" />
               )}
-              <div className="flex flex-col gap-0.5 overflow-hidden">
+              <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
                 <span className="truncate">
                   {generation.guidance
-                    ? generation.guidance.slice(0, 30) +
-                      (generation.guidance.length > 30 ? '...' : '')
+                    ? generation.guidance.slice(0, 25) +
+                      (generation.guidance.length > 25 ? '...' : '')
                     : `${generation.projectCount} ideas`}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
                   {formatRelativeTime(displayTime)}
                 </span>
               </div>
+              {hasBranches && (
+                <span className="text-[9px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                  {branches.length}
+                </span>
+              )}
             </SidebarMenuButton>
+
+            {/* Branch items */}
+            {hasBranches && (
+              <SidebarMenuSub>
+                {branches.map((branch) => {
+                  const isBranchActive = currentGenerationId === branch._id
+                  const branchDisplayTime =
+                    branch.generatedAt || branch._creationTime
+                  const isBranchGenerating = branch.status === 'generating'
+
+                  return (
+                    <SidebarMenuSubItem key={branch._id}>
+                      <SidebarMenuSubButton
+                        isActive={isBranchActive}
+                        onClick={() => {
+                          navigate({
+                            to: '/projectIdeas',
+                            search: { generationId: branch._id },
+                          })
+                        }}
+                      >
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                          {isBranchGenerating ? (
+                            <HugeiconsIcon
+                              icon={Loading03FreeIcons}
+                              className="size-3 animate-spin text-primary shrink-0"
+                            />
+                          ) : (
+                            <HugeiconsIcon
+                              icon={GitBranchIcon}
+                              className="size-3 text-primary shrink-0"
+                            />
+                          )}
+                          <div className="flex flex-col gap-0 overflow-hidden">
+                            <span className="truncate text-[11px]">
+                              {branch.parentProjectName
+                                ? branch.parentProjectName.slice(0, 20) +
+                                  (branch.parentProjectName.length > 20
+                                    ? '...'
+                                    : '')
+                                : branch.guidance
+                                  ? branch.guidance.slice(0, 20) +
+                                    (branch.guidance.length > 20 ? '...' : '')
+                                  : `${branch.projectCount} ideas`}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground">
+                              {formatRelativeTime(branchDisplayTime)}
+                            </span>
+                          </div>
+                        </div>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )
+                })}
+              </SidebarMenuSub>
+            )}
           </SidebarMenuItem>
         )
       })}
