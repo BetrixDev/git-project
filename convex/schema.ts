@@ -23,6 +23,8 @@ export default defineSchema({
     generatedAt: v.optional(v.number()),
     guidance: v.optional(v.string()),
     projects: v.array(projectValidator),
+    // Auto-generated display name based on common tags across projects
+    displayName: v.optional(v.string()),
     // Branching support - link to parent generation and specific project that inspired this
     parentGenerationId: v.optional(v.id('generations')),
     parentProjectId: v.optional(v.string()), // The project.id from parent generation

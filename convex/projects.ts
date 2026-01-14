@@ -28,6 +28,65 @@ export const startGeneration = internalMutation({
   },
 })
 
+/**
+ * Derives a meaningful display name from the common/dominant tags across projects.
+ * Analyzes tag frequency and picks the most representative theme.
+ */
+function deriveDisplayNameFromTags(
+  projects: Array<{
+    id: string
+    name: string
+    description: string
+    tags: string[]
+  }>,
+): string {
+  if (projects.length === 0) return 'Empty Generation'
+
+  // Count tag occurrences across all projects
+  const tagCounts = new Map<string, number>()
+  for (const project of projects) {
+    for (const tag of project.tags) {
+      const normalized = tag.toLowerCase().trim()
+      tagCounts.set(normalized, (tagCounts.get(normalized) || 0) + 1)
+    }
+  }
+
+  // Sort tags by frequency (descending), then alphabetically for ties
+  const sortedTags = [...tagCounts.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1]
+      return a[0].localeCompare(b[0])
+    })
+    .map(([tag]) => tag)
+
+  if (sortedTags.length === 0) {
+    // Fallback: use first project name if no tags
+    return projects[0].name.slice(0, 30)
+  }
+
+  // Format the display name from top tags
+  // Title case the tags for better readability
+  const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase())
+
+  // Take top 2 tags if they appear in at least 2 projects, otherwise just the top one
+  const threshold = Math.max(2, Math.floor(projects.length / 2))
+  const dominantTags = sortedTags.filter(
+    (tag) => (tagCounts.get(tag) || 0) >= threshold,
+  )
+
+  if (dominantTags.length >= 2) {
+    return `${titleCase(dominantTags[0])} & ${titleCase(dominantTags[1])}`
+  } else if (dominantTags.length === 1) {
+    return `${titleCase(dominantTags[0])} Projects`
+  } else {
+    // No dominant tags, use top 2 most common
+    if (sortedTags.length >= 2) {
+      return `${titleCase(sortedTags[0])} & ${titleCase(sortedTags[1])}`
+    }
+    return `${titleCase(sortedTags[0])} Projects`
+  }
+}
+
 export const storeProjectIdeas = internalMutation({
   args: {
     generationId: v.id('generations'),
@@ -37,11 +96,15 @@ export const storeProjectIdeas = internalMutation({
   handler: async (ctx, args) => {
     const now = Date.now()
 
+    // Derive a meaningful display name from the project tags
+    const displayName = deriveDisplayNameFromTags(args.projects)
+
     await ctx.db.patch(args.generationId, {
       projects: args.projects,
       status: 'completed',
       error: undefined,
       generatedAt: now,
+      displayName,
     })
 
     return null
@@ -77,6 +140,7 @@ export const getLatestGeneration = query({
       error: v.optional(v.string()),
       generatedAt: v.optional(v.number()),
       guidance: v.optional(v.string()),
+      displayName: v.optional(v.string()),
       projects: v.array(projectValidator),
       parentGenerationId: v.optional(v.id('generations')),
       parentProjectId: v.optional(v.string()),
@@ -109,6 +173,7 @@ export const getGenerationHistory = query({
       status: generationStatusValidator,
       generatedAt: v.optional(v.number()),
       guidance: v.optional(v.string()),
+      displayName: v.optional(v.string()),
       projectCount: v.number(),
       parentGenerationId: v.optional(v.id('generations')),
       parentProjectId: v.optional(v.string()),
@@ -133,6 +198,7 @@ export const getGenerationHistory = query({
       status: gen.status,
       generatedAt: gen.generatedAt,
       guidance: gen.guidance,
+      displayName: gen.displayName,
       projectCount: gen.projects.length,
       parentGenerationId: gen.parentGenerationId,
       parentProjectId: gen.parentProjectId,
@@ -154,6 +220,7 @@ export const getGenerationById = query({
       error: v.optional(v.string()),
       generatedAt: v.optional(v.number()),
       guidance: v.optional(v.string()),
+      displayName: v.optional(v.string()),
       projects: v.array(projectValidator),
       parentGenerationId: v.optional(v.id('generations')),
       parentProjectId: v.optional(v.string()),

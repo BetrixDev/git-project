@@ -143,16 +143,24 @@ function GenerationHistoryList() {
                   )}
                   <div className="flex flex-col gap-0 overflow-hidden flex-1">
                     <span className="truncate text-[11px]">
-                      {branch.parentProjectName
-                        ? branch.parentProjectName.slice(0, 20) +
-                          (branch.parentProjectName.length > 20 ? '...' : '')
-                        : branch.guidance
-                          ? branch.guidance.slice(0, 20) +
-                            (branch.guidance.length > 20 ? '...' : '')
-                          : `${branch.projectCount} ideas`}
+                      {isBranchGenerating
+                        ? 'Generating...'
+                        : branch.parentProjectName
+                          ? branch.parentProjectName.slice(0, 20) +
+                            (branch.parentProjectName.length > 20 ? '...' : '')
+                          : branch.guidance
+                            ? branch.guidance.slice(0, 20) +
+                              (branch.guidance.length > 20 ? '...' : '')
+                            : `${branch.projectCount} ideas`}
                     </span>
                     <span className="text-[9px] text-muted-foreground">
-                      {formatRelativeTime(branchDisplayTime)}
+                      {isBranchGenerating ? (
+                        <span className="text-primary animate-pulse">
+                          Creating ideas
+                        </span>
+                      ) : (
+                        formatRelativeTime(branchDisplayTime)
+                      )}
                     </span>
                   </div>
                   {hasChildBranches && (
@@ -194,8 +202,11 @@ function GenerationHistoryList() {
                 />
               }
               tooltip={
-                generation.guidance ||
-                `${generation.projectCount} project ideas`
+                isGenerating
+                  ? 'Generating project ideas...'
+                  : generation.displayName ||
+                    generation.guidance ||
+                    `${generation.projectCount} project ideas`
               }
             >
               {isGenerating ? (
@@ -208,13 +219,24 @@ function GenerationHistoryList() {
               )}
               <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
                 <span className="truncate">
-                  {generation.guidance
-                    ? generation.guidance.slice(0, 25) +
-                      (generation.guidance.length > 25 ? '...' : '')
-                    : `${generation.projectCount} ideas`}
+                  {isGenerating
+                    ? 'Generating...'
+                    : generation.displayName
+                      ? generation.displayName.slice(0, 25) +
+                        (generation.displayName.length > 25 ? '...' : '')
+                      : generation.guidance
+                        ? generation.guidance.slice(0, 25) +
+                          (generation.guidance.length > 25 ? '...' : '')
+                        : `${generation.projectCount} ideas`}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {formatRelativeTime(displayTime)}
+                  {isGenerating ? (
+                    <span className="text-primary animate-pulse">
+                      Creating project ideas
+                    </span>
+                  ) : (
+                    formatRelativeTime(displayTime)
+                  )}
                 </span>
               </div>
               {hasBranches && (
