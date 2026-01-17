@@ -3,9 +3,9 @@
 import { v } from "convex/values";
 import { Output, generateText } from "ai";
 import { z } from "zod";
-import { internalAction } from "./_generated/server";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import dedent from "dedent";
+import { internalAction } from "./_generated/server";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -16,7 +16,7 @@ type GitHubRepo = {
   name: string;
   description: string | null;
   language: string | null;
-  topics: string[];
+  topics: Array<string>;
   stars: number;
   fork: boolean;
   is_template: boolean;
@@ -27,7 +27,7 @@ type RepoData = {
   name: string;
   description: string | null;
   language: string | null;
-  topics: string[];
+  topics: Array<string>;
 };
 
 async function fetchGitHubRepos(githubUsername: string) {
@@ -48,7 +48,7 @@ async function fetchGitHubRepos(githubUsername: string) {
     );
   }
 
-  const repos: GitHubRepo[] = await response.json();
+  const repos: Array<GitHubRepo> = await response.json();
   const filteredRepos = repos.filter(
     (r) => !r.fork && !r.is_template && !r.archived,
   );
@@ -81,7 +81,7 @@ async function fetchGithubStarredProjects(githubUsername: string) {
     );
   }
 
-  const starredProjects: GitHubRepo[] = await response.json();
+  const starredProjects: Array<GitHubRepo> = await response.json();
   const filteredStarredProjects = starredProjects.filter(
     (r) => !r.fork && !r.is_template && !r.archived,
   );
@@ -119,7 +119,7 @@ type ProjectIdea = {
   id: string;
   name: string;
   description: string;
-  tags: string[];
+  tags: Array<string>;
 };
 
 export const fetchGitHubUserRepos = internalAction({
@@ -159,7 +159,7 @@ export const generateProjectIdeasFromData = internalAction({
     parentProjectName: v.optional(v.string()),
     parentProjectDescription: v.optional(v.string()),
   },
-  handler: async (_, args): Promise<ProjectIdea[]> => {
+  handler: async (_, args): Promise<Array<ProjectIdea>> => {
     const {
       githubUsername,
       repos,

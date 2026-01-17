@@ -5,11 +5,7 @@ import {
   mutation,
   query,
 } from "./_generated/server";
-import {
-  generationStatusValidator,
-  generationStepValidator,
-  projectValidator,
-} from "./schema";
+import { generationStepValidator, projectValidator } from "./schema";
 import { api, internal } from "./_generated/api";
 import { workflow } from "./index";
 
@@ -24,7 +20,6 @@ export const createGeneration = mutation({
     parentProjectName: v.optional(v.string()),
     parentProjectDescription: v.optional(v.string()),
   },
-  returns: v.id("generations"),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -66,7 +61,6 @@ export const retryGeneration = mutation({
     generationId: v.id("generations"),
     githubUsername: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -112,7 +106,6 @@ export const storeProjectIdeas = internalMutation({
     generationId: v.id("generations"),
     projects: v.array(projectValidator),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const now = Date.now();
 
@@ -132,7 +125,6 @@ export const storeDisplayName = internalMutation({
     generationId: v.id("generations"),
     displayName: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.generationId, {
       displayName: args.displayName,
@@ -148,7 +140,6 @@ export const updateGenerationStep = internalMutation({
     generationId: v.id("generations"),
     step: generationStepValidator,
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.generationId, {
       currentStep: args.step,
@@ -170,7 +161,6 @@ export const setGenerationError = internalMutation({
     generationId: v.id("generations"),
     error: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.generationId, {
       status: "error",
@@ -184,24 +174,6 @@ export const setGenerationError = internalMutation({
 // Get the latest generation for the current user
 export const getLatestGeneration = query({
   args: {},
-  returns: v.union(
-    v.null(),
-    v.object({
-      _id: v.id("generations"),
-      _creationTime: v.number(),
-      userId: v.string(),
-      status: generationStatusValidator,
-      currentStep: v.optional(generationStepValidator),
-      error: v.optional(v.string()),
-      generatedAt: v.optional(v.number()),
-      guidance: v.optional(v.string()),
-      displayName: v.optional(v.string()),
-      projects: v.array(projectValidator),
-      parentGenerationId: v.optional(v.id("generations")),
-      parentProjectId: v.optional(v.string()),
-      parentProjectName: v.optional(v.string()),
-    }),
-  ),
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -326,7 +298,6 @@ export const deleteGeneration = mutation({
   args: {
     generationId: v.id("generations"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await ctx.auth.getUserIdentity();
 

@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { useAtom } from "jotai";
-import { atom } from "jotai";
+import { atom, useAtom } from "jotai";
 import { toast } from "sonner";
 import { api } from "../../convex/_generated/api";
-import { Id } from "convex/_generated/dataModel";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +12,7 @@ import {
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
+import type { Id } from "convex/_generated/dataModel";
 
 export const editGenerationDisplayNameAtom = atom<Id<"generations"> | null>(
   null,

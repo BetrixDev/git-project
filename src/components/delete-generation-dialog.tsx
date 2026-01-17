@@ -1,10 +1,8 @@
 import { useMutation, useQuery } from "convex/react";
-import { useAtom } from "jotai";
-import { atom } from "jotai";
+import { atom, useAtom } from "jotai";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { api } from "../../convex/_generated/api";
-import { Id } from "convex/_generated/dataModel";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +12,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
+import type { Id } from "convex/_generated/dataModel";
 
 export const deleteGenerationAtom = atom<Id<"generations"> | null>(null);
 

@@ -18,7 +18,27 @@ import {
   SubnodeDeleteIcon,
   ViewIcon,
 } from "@hugeicons/core-free-icons";
+import { useSetAtom } from "jotai";
 import { api } from "../../convex/_generated/api";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "./ui/context-menu";
+import { Button } from "./ui/button";
+import {
+  EditGenerationDialog,
+  editGenerationDisplayNameAtom,
+} from "./edit-generation-dialog";
+import {
+  DeleteGenerationDialog,
+  deleteGenerationAtom,
+} from "./delete-generation-dialog";
+import type { Id } from "convex/_generated/dataModel";
+import { useGenerateProjects } from "@/hooks/use-generate-projects";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sidebar,
   SidebarContent,
@@ -32,30 +52,10 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
   SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useGenerateProjects } from "@/hooks/use-generate-projects";
-import {
-  ContextMenu,
-  ContextMenuItem,
-  ContextMenuContent,
-  ContextMenuTrigger,
-  ContextMenuSeparator,
-} from "./ui/context-menu";
-import { Button } from "./ui/button";
-import { Id } from "convex/_generated/dataModel";
-import { useSetAtom } from "jotai";
-import {
-  EditGenerationDialog,
-  editGenerationDisplayNameAtom,
-} from "./edit-generation-dialog";
-import {
-  DeleteGenerationDialog,
-  deleteGenerationAtom,
-} from "./delete-generation-dialog";
 
 function formatRelativeTime(timestamp: number): string {
   const now = Date.now();
