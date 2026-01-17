@@ -4,7 +4,6 @@ import { generationStatusValidator, projectValidator } from './schema'
 
 export { projectValidator }
 
-// Public mutation for creating a new generation - returns ID immediately
 export const createGeneration = mutation({
   args: {
     guidance: v.optional(v.string()),
@@ -57,83 +56,22 @@ export const startGeneration = internalMutation({
   },
 })
 
-/**
- * Derives a meaningful display name from the common/dominant tags across projects.
- * Analyzes tag frequency and picks the most representative theme.
- */
-function deriveDisplayNameFromTags(
-  projects: Array<{
-    id: string
-    name: string
-    description: string
-    tags: Array<string>
-  }>,
-): string {
-  if (projects.length === 0) return 'Empty Generation'
-
-  // Count tag occurrences across all projects
-  const tagCounts = new Map<string, number>()
-  for (const project of projects) {
-    for (const tag of project.tags) {
-      const normalized = tag.toLowerCase().trim()
-      tagCounts.set(normalized, (tagCounts.get(normalized) || 0) + 1)
-    }
-  }
-
-  // Sort tags by frequency (descending), then alphabetically for ties
-  const sortedTags = [...tagCounts.entries()]
-    .sort((a, b) => {
-      if (b[1] !== a[1]) return b[1] - a[1]
-      return a[0].localeCompare(b[0])
-    })
-    .map(([tag]) => tag)
-
-  if (sortedTags.length === 0) {
-    // Fallback: use first project name if no tags
-    return projects[0].name.slice(0, 30)
-  }
-
-  // Format the display name from top tags
-  // Title case the tags for better readability
-  const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase())
-
-  // Take top 2 tags if they appear in at least 2 projects, otherwise just the top one
-  const threshold = Math.max(2, Math.floor(projects.length / 2))
-  const dominantTags = sortedTags.filter(
-    (tag) => (tagCounts.get(tag) || 0) >= threshold,
-  )
-
-  if (dominantTags.length >= 2) {
-    return `${titleCase(dominantTags[0])} & ${titleCase(dominantTags[1])}`
-  } else if (dominantTags.length === 1) {
-    return `${titleCase(dominantTags[0])} Projects`
-  } else {
-    // No dominant tags, use top 2 most common
-    if (sortedTags.length >= 2) {
-      return `${titleCase(sortedTags[0])} & ${titleCase(sortedTags[1])}`
-    }
-    return `${titleCase(sortedTags[0])} Projects`
-  }
-}
-
 export const storeProjectIdeas = internalMutation({
   args: {
     generationId: v.id('generations'),
+    displayName: v.string(),
     projects: v.array(projectValidator),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const now = Date.now()
 
-    // Derive a meaningful display name from the project tags
-    const displayName = deriveDisplayNameFromTags(args.projects)
-
     await ctx.db.patch(args.generationId, {
       projects: args.projects,
       status: 'completed',
       error: undefined,
       generatedAt: now,
-      displayName,
+      displayName: args.displayName,
     })
 
     return null
@@ -313,5 +251,52 @@ export const getGenerationBranches = query({
         parentProjectId: gen.parentProjectId,
         parentProjectName: gen.parentProjectName,
       }))
+  },
+})
+
+export const updateGenerationDisplayName = mutation({
+  args: {
+    generationId: v.id('generations'),
+    displayName: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await ctx.auth.getUserIdentity()
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    const generation = await ctx.db.get(args.generationId)
+
+    if (!generation || generation.userId !== user.subject) {
+      throw new Error('Generation not found')
+    }
+
+    await ctx.db.patch(args.generationId, { displayName: args.displayName })
+    return null
+  },
+})
+
+export const deleteGeneration = mutation({
+  args: {
+    generationId: v.id('generations'),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await ctx.auth.getUserIdentity()
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    const generation = await ctx.db.get(args.generationId)
+
+    if (!generation || generation.userId !== user.subject) {
+      throw new Error('Generation not found')
+    }
+
+    await ctx.db.delete(args.generationId)
+    return null
   },
 })

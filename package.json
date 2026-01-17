@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
-    "format": "prettier",
+    "format": "prettier --write .",
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
@@ -34,6 +34,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "convex": "^1.31.4",
+    "jotai": "^2.16.2",
     "nitro": "latest",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

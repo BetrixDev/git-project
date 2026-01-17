@@ -1,7 +1,7 @@
 'use node'
 
 import { v } from 'convex/values'
-import { Output, ToolLoopAgent, tool } from 'ai'
+import { Output, ToolLoopAgent, generateText, tool } from 'ai'
 import { z } from 'zod'
 import { action } from './_generated/server'
 import { internal } from './_generated/api'
@@ -216,9 +216,15 @@ After gathering enough information, generate 6 diverse project ideas that:
         return null
       }
 
+      const displayName = await generateText({
+        model: 'google/gemini-2.0-flash-lite',
+        prompt: `Come up with a short display name that sums up the following project ideas: ${result.output.projects.map((project) => `${project.name} - ${project.description}`).join('\n')}. The display name should be no more than 5 words. Only output the display name and nothing else.`,
+      })
+
       await ctx.runMutation(internal.projects.storeProjectIdeas, {
         generationId,
         projects: result.output.projects,
+        displayName: displayName.text,
       })
     } catch (error) {
       const errorMessage =

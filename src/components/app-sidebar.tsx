@@ -9,11 +9,14 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Clock01FreeIcons,
+  Delete04Icon,
   GitBranchIcon,
-  Home01FreeIcons,
   Loading03FreeIcons,
   Message01FreeIcons,
+  PencilEdit01Icon,
   SparklesFreeIcons,
+  SubnodeDeleteIcon,
+  ViewIcon,
 } from '@hugeicons/core-free-icons'
 import { api } from '../../convex/_generated/api'
 import {
@@ -34,6 +37,24 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar'
 import { useGenerateProjects } from '@/hooks/use-generate-projects'
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuContent,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from './ui/context-menu'
+import { Button } from './ui/button'
+import { Id } from 'convex/_generated/dataModel'
+import { useSetAtom } from 'jotai'
+import {
+  EditGenerationDialog,
+  editGenerationDisplayNameAtom,
+} from './edit-generation-dialog'
+import {
+  DeleteGenerationDialog,
+  deleteGenerationAtom,
+} from './delete-generation-dialog'
 
 function formatRelativeTime(timestamp: number): string {
   const now = Date.now()
@@ -64,6 +85,67 @@ function GenerationHistorySkeleton() {
   )
 }
 
+type GenerationContextMenuProps = {
+  generationId: Id<'generations'>
+  children: React.ReactNode
+  isBranch?: boolean
+}
+
+function GenerationContextMenu({
+  generationId,
+  children,
+  isBranch = false,
+}: GenerationContextMenuProps) {
+  const generation = useQuery(api.projects.getGenerationById, {
+    id: generationId,
+  })
+
+  const setEditGenerationDisplayName = useSetAtom(editGenerationDisplayNameAtom)
+  const setDeleteGeneration = useSetAtom(deleteGenerationAtom)
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger>{children}</ContextMenuTrigger>
+      <ContextMenuContent>
+        <p className="text-xs text-muted-foreground/90 truncate text-center w-full my-2 border-b border-border/50 pb-2">
+          {generation?.displayName ||
+            generation?.guidance ||
+            `${generation?.projects.length} ideas`}
+        </p>
+        <ContextMenuItem
+          render={
+            <Link to="/projectIdeas" search={{ generationId }}>
+              <HugeiconsIcon icon={ViewIcon} className="size-4" /> View
+            </Link>
+          }
+        />
+        <ContextMenuItem
+          onClick={() => setEditGenerationDisplayName(generationId)}
+        >
+          <HugeiconsIcon icon={PencilEdit01Icon} className="size-4" /> Edit
+          Display Name
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          onClick={() => setDeleteGeneration(generationId)}
+          render={
+            <Button
+              variant="destructiveOutline"
+              className="w-full items-center justify-start"
+            >
+              <HugeiconsIcon
+                icon={isBranch ? SubnodeDeleteIcon : Delete04Icon}
+                className="size-4"
+              />{' '}
+              Delete
+            </Button>
+          }
+        />
+      </ContextMenuContent>
+    </ContextMenu>
+  )
+}
+
 function GenerationHistoryList() {
   const history = useQuery(api.projects.getGenerationHistory)
 
@@ -83,7 +165,7 @@ function GenerationHistoryList() {
   if (history.length === 0) {
     return (
       <div className="px-3 py-6 text-center">
-        <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-transparent ring-1 ring-primary/10">
+        <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-primary/10 to-transparent ring-1 ring-primary/10">
           <HugeiconsIcon
             icon={SparklesFreeIcons}
             className="size-4 text-primary/50"
@@ -128,59 +210,62 @@ function GenerationHistoryList() {
 
           return (
             <SidebarMenuSubItem key={branch._id}>
-              <SidebarMenuSubButton
-                isActive={isBranchActive}
-                render={
-                  <Link
-                    to="/projectIdeas"
-                    search={{ generationId: branch._id }}
-                  />
-                }
-                className={`sidebar-branch-item group/branch transition-all duration-200 ${isBranchActive ? 'bg-linear-to-r from-primary/10 to-transparent' : 'hover:bg-muted/40'}`}
-              >
-                <div className="flex items-center gap-2 overflow-hidden flex-1">
-                  <div
-                    className={`flex size-5 items-center justify-center rounded-md transition-all duration-200 ${isBranchGenerating ? 'bg-primary/20' : isBranchActive ? 'bg-primary/15 text-primary' : 'bg-muted/30 text-muted-foreground group-hover/branch:text-primary'}`}
-                  >
-                    {isBranchGenerating ? (
-                      <HugeiconsIcon
-                        icon={Loading03FreeIcons}
-                        className="size-2.5 animate-spin text-primary"
-                      />
-                    ) : (
-                      <HugeiconsIcon
-                        icon={GitBranchIcon}
-                        className="size-2.5"
-                      />
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-0 overflow-hidden flex-1">
-                    <span
-                      className={`truncate text-[11px] ${isBranchActive ? 'font-medium text-foreground' : ''}`}
+              <GenerationContextMenu generationId={branch._id} isBranch={true}>
+                <SidebarMenuSubButton
+                  isActive={isBranchActive}
+                  render={
+                    <Link
+                      to="/projectIdeas"
+                      search={{ generationId: branch._id }}
+                    />
+                  }
+                  className={`sidebar-branch-item group/branch transition-all duration-200 ${isBranchActive ? 'bg-linear-to-r from-primary/10 to-transparent' : 'hover:bg-muted/40'}`}
+                >
+                  <div className="flex items-center gap-2 overflow-hidden flex-1">
+                    <div
+                      className={`flex size-5 items-center justify-center rounded-md transition-all duration-200 ${isBranchGenerating ? 'bg-primary/20' : isBranchActive ? 'bg-primary/15 text-primary' : 'bg-muted/30 text-muted-foreground group-hover/branch:text-primary'}`}
                     >
-                      {isBranchGenerating
-                        ? 'Generating...'
-                        : branch.parentProjectName
-                          ? branch.parentProjectName.slice(0, 20) +
-                            (branch.parentProjectName.length > 20 ? '...' : '')
-                          : branch.guidance
-                            ? branch.guidance.slice(0, 20) +
-                              (branch.guidance.length > 20 ? '...' : '')
-                            : `${branch.projectCount} ideas`}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground/60">
                       {isBranchGenerating ? (
-                        <span className="text-primary/80 animate-pulse">
-                          Creating ideas
-                        </span>
+                        <HugeiconsIcon
+                          icon={Loading03FreeIcons}
+                          className="size-2.5 animate-spin text-primary"
+                        />
                       ) : (
-                        formatRelativeTime(branchDisplayTime)
+                        <HugeiconsIcon
+                          icon={GitBranchIcon}
+                          className="size-2.5"
+                        />
                       )}
-                    </span>
+                    </div>
+                    <div className="flex flex-col gap-0 overflow-hidden flex-1">
+                      <span
+                        className={`truncate text-[11px] ${isBranchActive ? 'font-medium text-foreground' : ''}`}
+                      >
+                        {isBranchGenerating
+                          ? 'Generating...'
+                          : branch.parentProjectName
+                            ? branch.parentProjectName.slice(0, 20) +
+                              (branch.parentProjectName.length > 20
+                                ? '...'
+                                : '')
+                            : branch.guidance
+                              ? branch.guidance.slice(0, 20) +
+                                (branch.guidance.length > 20 ? '...' : '')
+                              : `${branch.projectCount} ideas`}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground/60">
+                        {isBranchGenerating ? (
+                          <span className="text-primary/80 animate-pulse">
+                            Creating ideas
+                          </span>
+                        ) : (
+                          formatRelativeTime(branchDisplayTime)
+                        )}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </SidebarMenuSubButton>
-
+                </SidebarMenuSubButton>
+              </GenerationContextMenu>
               {/* Recursively render child branches */}
               {hasChildBranches && (
                 <BranchSubMenu branches={childBranches} depth={depth + 1} />
@@ -203,63 +288,65 @@ function GenerationHistoryList() {
 
         return (
           <SidebarMenuItem key={generation._id}>
-            <SidebarMenuButton
-              isActive={isActive}
-              render={
-                <Link
-                  to="/projectIdeas"
-                  search={{ generationId: generation._id }}
-                />
-              }
-              tooltip={
-                isGenerating
-                  ? 'Generating project ideas...'
-                  : generation.displayName ||
-                    generation.guidance ||
-                    `${generation.projectCount} project ideas`
-              }
-              className={`sidebar-history-item group/item transition-all duration-200 ${isActive ? 'bg-linear-to-r from-primary/15 to-transparent ring-1 ring-primary/20' : 'hover:bg-linear-to-r hover:from-muted/60 hover:to-transparent'}`}
-            >
-              <div
-                className={`flex size-7 items-center justify-center rounded-lg transition-all duration-200 ${isGenerating ? 'bg-primary/20 animate-pulse' : isActive ? 'bg-primary/20 text-primary' : 'bg-muted/40 text-muted-foreground group-hover/item:bg-primary/15 group-hover/item:text-primary'}`}
+            <GenerationContextMenu generationId={generation._id}>
+              <SidebarMenuButton
+                isActive={isActive}
+                render={
+                  <Link
+                    to="/projectIdeas"
+                    search={{ generationId: generation._id }}
+                  />
+                }
+                tooltip={
+                  isGenerating
+                    ? 'Generating project ideas...'
+                    : generation.displayName ||
+                      generation.guidance ||
+                      `${generation.projectCount} project ideas`
+                }
+                className={`sidebar-history-item group/item transition-all duration-200 ${isActive ? 'bg-linear-to-r from-primary/15 to-transparent ring-1 ring-primary/20' : 'hover:bg-linear-to-r hover:from-muted/60 hover:to-transparent'}`}
               >
-                {isGenerating ? (
-                  <HugeiconsIcon
-                    icon={Loading03FreeIcons}
-                    className="size-3.5 animate-spin text-primary"
-                  />
-                ) : (
-                  <HugeiconsIcon
-                    icon={SparklesFreeIcons}
-                    className="size-3.5"
-                  />
-                )}
-              </div>
-              <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
-                <span
-                  className={`truncate text-[13px] ${isActive ? 'font-semibold text-foreground' : 'font-medium'}`}
+                <div
+                  className={`flex size-7 items-center justify-center rounded-lg transition-all duration-200 ${isGenerating ? 'bg-primary/20 animate-pulse' : isActive ? 'bg-primary/20 text-primary' : 'bg-muted/40 text-muted-foreground group-hover/item:bg-primary/15 group-hover/item:text-primary'}`}
                 >
-                  {isGenerating
-                    ? 'Generating...'
-                    : generation.displayName
-                      ? generation.displayName.slice(0, 25) +
-                        (generation.displayName.length > 25 ? '...' : '')
-                      : generation.guidance
-                        ? generation.guidance.slice(0, 25) +
-                          (generation.guidance.length > 25 ? '...' : '')
-                        : `${generation.projectCount} ideas`}
-                </span>
-                <span className="text-[10px] text-muted-foreground/70">
                   {isGenerating ? (
-                    <span className="text-primary animate-pulse">
-                      Creating project ideas
-                    </span>
+                    <HugeiconsIcon
+                      icon={Loading03FreeIcons}
+                      className="size-3.5 animate-spin text-primary"
+                    />
                   ) : (
-                    formatRelativeTime(displayTime)
+                    <HugeiconsIcon
+                      icon={SparklesFreeIcons}
+                      className="size-3.5"
+                    />
                   )}
-                </span>
-              </div>
-            </SidebarMenuButton>
+                </div>
+                <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
+                  <span
+                    className={`truncate text-[13px] ${isActive ? 'font-semibold text-foreground' : 'font-medium'}`}
+                  >
+                    {isGenerating
+                      ? 'Generating...'
+                      : generation.displayName
+                        ? generation.displayName.slice(0, 25) +
+                          (generation.displayName.length > 25 ? '...' : '')
+                        : generation.guidance
+                          ? generation.guidance.slice(0, 25) +
+                            (generation.guidance.length > 25 ? '...' : '')
+                          : `${generation.projectCount} ideas`}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/70">
+                    {isGenerating ? (
+                      <span className="text-primary animate-pulse">
+                        Creating project ideas
+                      </span>
+                    ) : (
+                      formatRelativeTime(displayTime)
+                    )}
+                  </span>
+                </div>
+              </SidebarMenuButton>
+            </GenerationContextMenu>
 
             {/* Branch items - now recursive */}
             {hasBranches && <BranchSubMenu branches={branches} />}
@@ -279,7 +366,10 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <>
+      <EditGenerationDialog />
+      <DeleteGenerationDialog />
+      <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -426,5 +516,6 @@ export function AppSidebar() {
         </SignedIn>
       </SidebarFooter>
     </Sidebar>
+    </>
   )
 }
